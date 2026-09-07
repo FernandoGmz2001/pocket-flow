@@ -360,7 +360,7 @@ export function TransactionDrawer({ open, onOpenChange }: TransactionDrawerProps
           onSubmit={form.handleSubmit(onSubmit)}
         >
           <div className="flex-1 overflow-y-auto px-4 py-4">{fields}</div>
-          <DrawerFooter>
+          <DrawerFooter className="pb-[max(2rem,calc(env(safe-area-inset-bottom)+1rem))]">
             <Button
               type="submit"
               size="lg"
