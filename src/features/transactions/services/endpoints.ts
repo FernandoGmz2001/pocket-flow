@@ -1,33 +1,89 @@
 import type { ICreateTransaction } from '@/features/transactions/interfaces/create.interface.ts'
 import type { ITransaction } from '@/features/transactions/interfaces/get-all.interface.ts'
 import { handleApiError } from '@/shared/lib/errors.ts'
-import { delay } from '@/shared/lib/format.ts'
-import { mockStore } from '@/shared/lib/mock-store.ts'
+import { mapDataError } from '@/shared/lib/supabase-errors.ts'
+import { mapTransaction, type ITransactionRow } from '@/shared/lib/supabase-mappers.ts'
+import { requireUserId, supabase } from '@/shared/lib/supabase.ts'
 
 export async function getTransactions(): Promise<ITransaction[]> {
   try {
-    await delay(180)
-    return mockStore.getTransactions()
+    const { data, error } = await supabase
+      .from('transactions')
+      .select('*')
+      .order('date', { ascending: false })
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      throw error
+    }
+
+    return ((data ?? []) as ITransactionRow[]).map(mapTransaction)
   } catch (error) {
-    throw handleApiError(error, 'No se pudieron obtener las transacciones')
+    throw handleApiError(
+      mapDataError(error, 'No se pudieron obtener las transacciones'),
+      'No se pudieron obtener las transacciones',
+    )
   }
 }
 
 export async function createTransaction(payload: ICreateTransaction) {
-  await delay(180)
-  return mockStore.createTransaction(payload)
+  const userId = await requireUserId()
+  const { data, error } = await supabase
+    .from('transactions')
+    .insert({
+      user_id: userId,
+      title: payload.title,
+      amount: payload.amount,
+      type: payload.type,
+      payment_method: payload.paymentMethod,
+      category_id: payload.categoryId,
+      date: payload.date,
+      description: payload.description ?? null,
+    })
+    .select('*')
+    .single()
+
+  if (error || !data) {
+    throw mapDataError(error, 'No se pudo guardar el movimiento')
+  }
+
+  return mapTransaction(data as ITransactionRow)
 }
 
 export async function getTransaction(id: string): Promise<ITransaction | null> {
   try {
-    await delay(180)
-    return mockStore.getTransaction(id) ?? null
+    const { data, error } = await supabase
+      .from('transactions')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle()
+
+    if (error) {
+      throw error
+    }
+
+    return data ? mapTransaction(data as ITransactionRow) : null
   } catch (error) {
-    throw handleApiError(error, 'No se pudo obtener el movimiento')
+    throw handleApiError(
+      mapDataError(error, 'No se pudo obtener el movimiento'),
+      'No se pudo obtener el movimiento',
+    )
   }
 }
 
 export async function deleteTransaction(id: string) {
-  await delay(180)
-  return mockStore.deleteTransaction(id)
+  const { data, error } = await supabase
+    .from('transactions')
+    .delete()
+    .eq('id', id)
+    .select('id')
+    .maybeSingle()
+
+  if (error) {
+    throw mapDataError(error, 'No se pudo deshacer el movimiento')
+  }
+
+  if (!data) {
+    throw new Error('Movimiento no encontrado')
+  }
 }

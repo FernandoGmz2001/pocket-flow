@@ -17,7 +17,6 @@ import { Skeleton } from '@/components/ui/skeleton.tsx'
 import type { ICategory } from '@/features/categories/interfaces/get-all.interface.ts'
 import { useDeleteCategory } from '@/features/categories/services/queries.ts'
 import { getCategoryIcon } from '@/shared/lib/category-icons.ts'
-import { isSeedCategory } from '@/shared/lib/mock-store.ts'
 import { cn } from '@/lib/utils.ts'
 
 interface CategoryListProps {
@@ -58,7 +57,7 @@ export function CategoryList({
     <ul className="flex flex-col gap-2">
       {categories.map((category) => {
         const Icon = getCategoryIcon(category.icon)
-        const canDelete = !isSeedCategory(category.id)
+        const canDelete = !category.isSeed
 
         return (
           <li

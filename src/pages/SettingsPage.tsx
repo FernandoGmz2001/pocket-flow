@@ -3,8 +3,10 @@ import { useState } from 'react'
 import { Link } from 'react-router'
 import { toast } from 'sonner'
 
+import { useAuth } from '@/app/auth-provider.tsx'
 import { useTheme } from '@/app/theme-provider.tsx'
 import { CategoryForm } from '@/components/CategoryForm.tsx'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar.tsx'
 import { CategoryList } from '@/components/CategoryList.tsx'
 import { ColorPalettePicker } from '@/components/ColorPalettePicker.tsx'
 import {
@@ -19,6 +21,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog.tsx'
 import { Button, buttonVariants } from '@/components/ui/button.tsx'
+import { Spinner } from '@/components/ui/spinner.tsx'
 import {
   Field,
   FieldContent,
@@ -28,6 +31,8 @@ import {
 import { Input } from '@/components/ui/input.tsx'
 import { Switch } from '@/components/ui/switch.tsx'
 import type { ICategory } from '@/features/categories/interfaces/get-all.interface.ts'
+import { getUserInitials } from '@/features/auth/lib/user-display.ts'
+import { useLogout } from '@/features/auth/services/queries.ts'
 import { useGetCategories } from '@/features/categories/services/queries.ts'
 import { cn } from '@/lib/utils.ts'
 import { useResetAppData } from '@/shared/services/app-data/queries.ts'
@@ -35,9 +40,11 @@ import { useResetAppData } from '@/shared/services/app-data/queries.ts'
 const RESET_CONFIRMATION_PHRASE = 'REESTABLECER'
 
 export function SettingsPage() {
+  const { user } = useAuth()
   const { data: categories = [], isLoading } = useGetCategories()
   const { theme, setTheme, colorPalette, setColorPalette } = useTheme()
   const { mutate: resetAppData, isPending: isResetting } = useResetAppData()
+  const { mutate: logout, isPending: isLoggingOut } = useLogout()
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false)
   const [resetConfirmation, setResetConfirmation] = useState('')
   const [editingCategory, setEditingCategory] = useState<ICategory | null>(null)
@@ -60,6 +67,19 @@ export function SettingsPage() {
           <XIcon />
         </Link>
       </header>
+
+      {user ? (
+        <section className="glass-panel flex items-center gap-3 rounded-2xl p-4 md:p-6">
+          <Avatar size="lg">
+            {user.photoUrl ? <AvatarImage src={user.photoUrl} alt={user.name} /> : null}
+            <AvatarFallback>{getUserInitials(user.name)}</AvatarFallback>
+          </Avatar>
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-medium">{user.name}</p>
+            <p className="truncate text-sm text-muted-foreground">{user.email}</p>
+          </div>
+        </section>
+      ) : null}
 
       <section className="glass-panel flex flex-col gap-4 rounded-2xl p-4 md:p-6">
         <div className="flex items-center gap-2">
@@ -202,10 +222,15 @@ export function SettingsPage() {
         type="button"
         variant="destructive"
         className="w-full"
-        onClick={() => toast.success('Sesión cerrada')}
+        disabled={isLoggingOut}
+        onClick={() => logout()}
       >
-        <LogOutIcon data-icon="inline-start" />
-        Cerrar sesión
+        {isLoggingOut ? (
+          <Spinner data-icon="inline-start" />
+        ) : (
+          <LogOutIcon data-icon="inline-start" />
+        )}
+        {isLoggingOut ? 'Cerrando sesión...' : 'Cerrar sesión'}
       </Button>
     </div>
   )
