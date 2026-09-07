@@ -165,7 +165,12 @@ export function SettingsPage() {
       >
         <AlertDialogTrigger
           render={
-            <Button variant="outline" className="w-full" disabled={isResetting} />
+            <Button
+              variant="outline"
+              size="lg"
+              className="h-12 w-full text-base"
+              disabled={isResetting}
+            />
           }
         >
           <RotateCcwIcon data-icon="inline-start" />
@@ -221,7 +226,8 @@ export function SettingsPage() {
       <Button
         type="button"
         variant="destructive"
-        className="w-full"
+        size="lg"
+        className="h-12 w-full text-base"
         disabled={isLoggingOut}
         onClick={() => logout()}
       >

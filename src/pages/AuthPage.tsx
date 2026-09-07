@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button.tsx'
 import { Separator } from '@/components/ui/separator.tsx'
 import { Spinner } from '@/components/ui/spinner.tsx'
 import { AuthAppPreview } from '@/features/auth/components/AuthAppPreview.tsx'
-import { AuthBackdrop } from '@/features/auth/components/AuthBackdrop.tsx'
 import { GoogleSignInButton } from '@/features/auth/components/GoogleSignInButton.tsx'
 import { LoginForm } from '@/features/auth/components/LoginForm.tsx'
 import { RegisterForm } from '@/features/auth/components/RegisterForm.tsx'
@@ -35,12 +34,10 @@ export function AuthPage() {
   }
 
   return (
-    <div className="relative min-h-dvh overflow-hidden">
-      <AuthBackdrop />
-
-      <div className="relative flex min-h-dvh items-center justify-center px-4 py-8 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(2rem,env(safe-area-inset-bottom))]">
-        <div className="grid w-full max-w-5xl overflow-hidden rounded-4xl bg-card shadow-xl ring-1 ring-foreground/10 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="flex w-full flex-col justify-center gap-8 px-6 py-8 sm:px-10 sm:py-12 lg:min-h-[42rem] lg:px-14 lg:py-14">
+    <div className="min-h-dvh bg-background">
+      <div className="flex min-h-dvh items-center justify-center px-4 py-8 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(2rem,env(safe-area-inset-bottom))]">
+        <div className="grid w-full max-w-5xl lg:grid-cols-[1.05fr_0.95fr] lg:overflow-hidden lg:rounded-4xl lg:bg-card lg:shadow-xl lg:ring-1 lg:ring-foreground/10">
+          <div className="flex w-full flex-col justify-center gap-8 lg:min-h-[42rem] lg:px-14 lg:py-14">
             <svg viewBox="0 0 24 24" className="size-7" aria-hidden="true">
               <path
                 d="M7 4 L13 20"

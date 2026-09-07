@@ -127,7 +127,7 @@ export function CategoryForm({ category, onCancel, onSaved }: CategoryFormProps)
       </FieldGroup>
 
       <div className="flex flex-col gap-2">
-        <Button type="submit" disabled={isPending}>
+        <Button type="submit" size="lg" className="h-12 text-base" disabled={isPending}>
           {isPending
             ? isEditing
               ? 'Guardando...'
@@ -137,7 +137,7 @@ export function CategoryForm({ category, onCancel, onSaved }: CategoryFormProps)
               : 'Crear categoría'}
         </Button>
         {isEditing ? (
-          <Button type="button" variant="outline" onClick={onCancel}>
+          <Button type="button" variant="outline" size="lg" className="h-12 text-base" onClick={onCancel}>
             Cancelar
           </Button>
         ) : null}

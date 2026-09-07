@@ -1,3 +1,4 @@
+import { useEffect, useEffectEvent, useRef } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
@@ -6,7 +7,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog.tsx'
@@ -25,6 +25,14 @@ import {
   FieldLabel,
 } from '@/components/ui/field.tsx'
 import { Input } from '@/components/ui/input.tsx'
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from '@/components/ui/combobox.tsx'
 import {
   Select,
   SelectContent,
@@ -63,6 +71,7 @@ function getDefaultValues(categoryId = ''): CreateTransactionSchema {
 
 export function TransactionDrawer({ open, onOpenChange }: TransactionDrawerProps) {
   const isDesktop = useMediaQuery('(min-width: 768px)')
+  const titleInputRef = useRef<HTMLInputElement | null>(null)
   const { data: categories = [] } = useGetCategories()
   const { mutateAsync: saveTransaction, isPending } = useCreateTransaction()
 
@@ -71,9 +80,28 @@ export function TransactionDrawer({ open, onOpenChange }: TransactionDrawerProps
     defaultValues: getDefaultValues(),
   })
 
-  const categoryItems = Object.fromEntries(
-    categories.map((category) => [category.id, category.name]),
-  )
+  const titleRegister = form.register('title')
+
+  const focusTitleInput = useEffectEvent(() => {
+    titleInputRef.current?.focus()
+  })
+
+  useEffect(() => {
+    if (!open) {
+      return
+    }
+
+    const frameId = requestAnimationFrame(() => {
+      focusTitleInput()
+    })
+
+    return () => cancelAnimationFrame(frameId)
+  }, [open])
+
+  const categoryOptions = categories.map((category) => ({
+    id: category.id,
+    name: category.name,
+  }))
   const paymentMethodItems = Object.fromEntries(
     PAYMENT_METHOD_OPTIONS.map((option) => [option.value, option.label]),
   )
@@ -103,7 +131,9 @@ export function TransactionDrawer({ open, onOpenChange }: TransactionDrawerProps
   const fields = (
     <FieldGroup>
       <Field>
-        <FieldLabel>Tipo</FieldLabel>
+        <FieldLabel>
+          Tipo <span className="text-destructive">*</span>
+        </FieldLabel>
         <Controller
           control={form.control}
           name="type"
@@ -130,7 +160,9 @@ export function TransactionDrawer({ open, onOpenChange }: TransactionDrawerProps
       </Field>
 
       <Field data-invalid={!!form.formState.errors.paymentMethod || undefined}>
-        <FieldLabel>Tipo de pago</FieldLabel>
+        <FieldLabel>
+          Tipo de pago <span className="text-destructive">*</span>
+        </FieldLabel>
         <Controller
           control={form.control}
           name="paymentMethod"
@@ -166,19 +198,27 @@ export function TransactionDrawer({ open, onOpenChange }: TransactionDrawerProps
       </Field>
 
       <Field data-invalid={!!form.formState.errors.title || undefined}>
-        <FieldLabel htmlFor="transaction-title">Nombre</FieldLabel>
+        <FieldLabel htmlFor="transaction-title">
+          Nombre <span className="text-destructive">*</span>
+        </FieldLabel>
         <Input
           id="transaction-title"
           placeholder="Cena, salario, uber..."
           className="rounded-md"
           aria-invalid={!!form.formState.errors.title || undefined}
-          {...form.register('title')}
+          {...titleRegister}
+          ref={(element) => {
+            titleRegister.ref(element)
+            titleInputRef.current = element
+          }}
         />
         <FieldError errors={[form.formState.errors.title]} />
       </Field>
 
       <Field data-invalid={!!form.formState.errors.amount || undefined}>
-        <FieldLabel htmlFor="transaction-amount">Cantidad</FieldLabel>
+        <FieldLabel htmlFor="transaction-amount">
+          Cantidad <span className="text-destructive">*</span>
+        </FieldLabel>
         <Input
           id="transaction-amount"
           type="number"
@@ -194,43 +234,53 @@ export function TransactionDrawer({ open, onOpenChange }: TransactionDrawerProps
       </Field>
 
       <Field data-invalid={!!form.formState.errors.categoryId || undefined}>
-        <FieldLabel>Categoría</FieldLabel>
+        <FieldLabel>
+          Categoría <span className="text-destructive">*</span>
+        </FieldLabel>
         <Controller
           control={form.control}
           name="categoryId"
-          render={({ field }) => (
-            <Select
-              value={field.value || null}
-              onValueChange={(value) => {
-                if (value) {
-                  field.onChange(value)
-                }
-              }}
-              items={categoryItems}
-            >
-              <SelectTrigger
-                className="w-full rounded-md"
-                aria-invalid={!!form.formState.errors.categoryId || undefined}
+          render={({ field }) => {
+            const selectedCategory =
+              categoryOptions.find((category) => category.id === field.value) ?? null
+
+            return (
+              <Combobox
+                items={categoryOptions}
+                value={selectedCategory}
+                onValueChange={(category) => {
+                  field.onChange(category?.id ?? '')
+                }}
+                itemToStringLabel={(category) => category.name}
+                itemToStringValue={(category) => category.id}
+                isItemEqualToValue={(item, value) => item.id === value.id}
               >
-                <SelectValue placeholder="Selecciona una categoría" />
-              </SelectTrigger>
-              <SelectContent className="rounded-md">
-                <SelectGroup>
-                  {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          )}
+                <ComboboxInput
+                  placeholder="Buscar categoría..."
+                  className="w-full rounded-md"
+                  aria-invalid={!!form.formState.errors.categoryId || undefined}
+                />
+                <ComboboxContent>
+                  <ComboboxEmpty>No se encontraron categorías.</ComboboxEmpty>
+                  <ComboboxList>
+                    {(category) => (
+                      <ComboboxItem key={category.id} value={category}>
+                        {category.name}
+                      </ComboboxItem>
+                    )}
+                  </ComboboxList>
+                </ComboboxContent>
+              </Combobox>
+            )
+          }}
         />
         <FieldError errors={[form.formState.errors.categoryId]} />
       </Field>
 
       <Field data-invalid={!!form.formState.errors.date || undefined}>
-        <FieldLabel htmlFor="transaction-date">Fecha</FieldLabel>
+        <FieldLabel htmlFor="transaction-date">
+          Fecha <span className="text-destructive">*</span>
+        </FieldLabel>
         <Input
           id="transaction-date"
           type="date"
@@ -246,24 +296,19 @@ export function TransactionDrawer({ open, onOpenChange }: TransactionDrawerProps
         <Textarea
           id="transaction-description"
           placeholder="Opcional"
-          className="rounded-md"
+          className="min-h-16 resize-none rounded-md md:min-h-14"
+          rows={2}
           {...form.register('description')}
         />
       </Field>
     </FieldGroup>
   )
 
-  const submitButton = (
-    <Button type="submit" className="w-full rounded-md sm:w-auto" disabled={isPending}>
-      {isPending ? 'Guardando...' : 'Guardar movimiento'}
-    </Button>
-  )
-
   if (isDesktop) {
     return (
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className="max-h-[90dvh] gap-0 overflow-hidden p-0 sm:max-w-lg">
-          <DialogHeader className="p-4 pb-0">
+        <DialogContent className="gap-4 overflow-y-auto sm:max-w-xl">
+          <DialogHeader>
             <DialogTitle>Nuevo movimiento</DialogTitle>
             <DialogDescription>
               Registra un ingreso o un gasto en tu flujo.
@@ -271,13 +316,20 @@ export function TransactionDrawer({ open, onOpenChange }: TransactionDrawerProps
           </DialogHeader>
 
           <form
-            className="flex min-h-0 flex-1 flex-col"
+            className="flex flex-col gap-4"
             onSubmit={form.handleSubmit(onSubmit)}
           >
-            <div className="max-h-[min(60dvh,32rem)] overflow-y-auto px-4 py-4">
-              {fields}
+            {fields}
+            <div className="flex justify-end pt-1">
+              <Button
+                type="submit"
+                size="lg"
+                className="h-12 min-w-48 rounded-md text-base"
+                disabled={isPending}
+              >
+                {isPending ? 'Guardando...' : 'Guardar movimiento'}
+              </Button>
             </div>
-            <DialogFooter className="sm:justify-stretch">{submitButton}</DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
@@ -308,7 +360,16 @@ export function TransactionDrawer({ open, onOpenChange }: TransactionDrawerProps
           onSubmit={form.handleSubmit(onSubmit)}
         >
           <div className="flex-1 overflow-y-auto px-4 py-4">{fields}</div>
-          <DrawerFooter>{submitButton}</DrawerFooter>
+          <DrawerFooter>
+            <Button
+              type="submit"
+              size="lg"
+              className="h-12 w-full rounded-md text-base"
+              disabled={isPending}
+            >
+              {isPending ? 'Guardando...' : 'Guardar movimiento'}
+            </Button>
+          </DrawerFooter>
         </form>
       </DrawerContent>
     </Drawer>
