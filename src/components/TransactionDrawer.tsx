@@ -257,7 +257,7 @@ export function TransactionDrawer({ open, onOpenChange }: TransactionDrawerProps
               >
                 <ComboboxInput
                   placeholder="Buscar categoría..."
-                  className="w-full rounded-md"
+                  className="max-w-full w-full rounded-md"
                   aria-invalid={!!form.formState.errors.categoryId || undefined}
                 />
                 <ComboboxContent>
@@ -284,7 +284,7 @@ export function TransactionDrawer({ open, onOpenChange }: TransactionDrawerProps
         <Input
           id="transaction-date"
           type="date"
-          className="rounded-md"
+          className="max-w-full rounded-md"
           aria-invalid={!!form.formState.errors.date || undefined}
           {...form.register('date')}
         />
@@ -347,7 +347,7 @@ export function TransactionDrawer({ open, onOpenChange }: TransactionDrawerProps
       }}
       showSwipeHandle
     >
-      <DrawerContent className="mx-auto w-full max-w-lg rounded-t-md">
+      <DrawerContent className="mx-auto w-full max-w-lg overflow-x-hidden rounded-t-md">
         <DrawerHeader>
           <DrawerTitle>Nuevo movimiento</DrawerTitle>
           <DrawerDescription>
@@ -356,10 +356,12 @@ export function TransactionDrawer({ open, onOpenChange }: TransactionDrawerProps
         </DrawerHeader>
 
         <form
-          className="flex min-h-0 flex-1 flex-col"
+          className="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden"
           onSubmit={form.handleSubmit(onSubmit)}
         >
-          <div className="flex-1 overflow-y-auto px-4 py-4">{fields}</div>
+          <div className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-4 py-4">
+            {fields}
+          </div>
           <DrawerFooter className="pb-[max(2rem,calc(env(safe-area-inset-bottom)+1rem))]">
             <Button
               type="submit"
