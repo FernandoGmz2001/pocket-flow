@@ -52,6 +52,7 @@ import {
   useCreateTransaction,
   useUpdateTransaction,
 } from '@/features/transactions/services/queries.ts'
+import { cn } from '@/lib/utils.ts'
 import { useMediaQuery } from '@/shared/hooks/use-media-query.ts'
 import { todayDateInput } from '@/shared/lib/format.ts'
 import { PAYMENT_METHOD_OPTIONS } from '@/shared/lib/payment-method.ts'
@@ -88,6 +89,9 @@ function getDefaultValues(
     description: '',
   }
 }
+
+const selectedTypeClassName =
+  'data-[pressed]:bg-primary data-[pressed]:text-primary-foreground data-[pressed]:hover:bg-primary data-[pressed]:hover:text-primary-foreground data-[state=on]:bg-primary data-[state=on]:text-primary-foreground aria-pressed:bg-primary aria-pressed:text-primary-foreground'
 
 export function TransactionDrawer({
   open,
@@ -199,10 +203,16 @@ export function TransactionDrawer({
                 }
               }}
             >
-              <ToggleGroupItem className="flex-1 rounded-md" value="expense">
+              <ToggleGroupItem
+                className={cn('flex-1 rounded-md', selectedTypeClassName)}
+                value="expense"
+              >
                 Gasto
               </ToggleGroupItem>
-              <ToggleGroupItem className="flex-1 rounded-md" value="income">
+              <ToggleGroupItem
+                className={cn('flex-1 rounded-md', selectedTypeClassName)}
+                value="income"
+              >
                 Ingreso
               </ToggleGroupItem>
             </ToggleGroup>

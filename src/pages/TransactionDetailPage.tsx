@@ -64,7 +64,10 @@ export function TransactionDetailPage() {
         <Link
           to="/"
           aria-label="Volver"
-          className={cn(buttonVariants({ variant: 'ghost', size: 'icon-lg' }), 'self-start')}
+          className={cn(
+            buttonVariants({ variant: 'outline', size: 'icon-lg' }),
+            'self-start !rounded-full',
+          )}
         >
           <ChevronLeftIcon />
         </Link>
@@ -100,8 +103,8 @@ export function TransactionDetailPage() {
           to="/"
           aria-label="Volver"
           className={cn(
-            buttonVariants({ variant: 'ghost', size: 'icon-lg' }),
-            'self-start',
+            buttonVariants({ variant: 'outline', size: 'icon-lg' }),
+            'self-start !rounded-full',
           )}
         >
           <ChevronLeftIcon />
