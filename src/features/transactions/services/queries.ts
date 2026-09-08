@@ -2,11 +2,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
 import type { ICreateTransaction } from '@/features/transactions/interfaces/create.interface.ts'
+import type { IUpdateTransaction } from '@/features/transactions/interfaces/update.interface.ts'
 import {
   createTransaction,
   deleteTransaction,
   getTransaction,
   getTransactions,
+  updateTransaction,
 } from '@/features/transactions/services/endpoints.ts'
 import { getErrorMessage } from '@/shared/lib/errors.ts'
 import { QUERY_KEYS } from '@/shared/react-query/query-keys.ts'
@@ -30,6 +32,33 @@ export function useCreateTransaction() {
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'No se pudo guardar el movimiento'))
+    },
+  })
+}
+
+export function useUpdateTransaction() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: string
+      payload: IUpdateTransaction
+    }) => updateTransaction(id, payload),
+    onSuccess: async (_data, { id }) => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.TRANSACTIONS.ALL,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.TRANSACTIONS.DETAIL(id),
+        }),
+      ])
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'No se pudo actualizar el movimiento'))
     },
   })
 }

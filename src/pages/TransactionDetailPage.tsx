@@ -1,7 +1,9 @@
-import { ChevronLeftIcon, ReceiptIcon, Undo2Icon } from 'lucide-react'
+import { useState } from 'react'
+import { ChevronLeftIcon, PencilIcon, ReceiptIcon, Undo2Icon } from 'lucide-react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
 
+import { TransactionDrawer } from '@/components/TransactionDrawer.tsx'
 import { Badge } from '@/components/ui/badge.tsx'
 import { Button, buttonVariants } from '@/components/ui/button.tsx'
 import {
@@ -37,6 +39,7 @@ import { formatPaymentMethod } from '@/shared/lib/payment-method.ts'
 export function TransactionDetailPage() {
   const { transactionId } = useParams<{ transactionId: string }>()
   const navigate = useNavigate()
+  const [isEditOpen, setIsEditOpen] = useState(false)
   const { data: transaction, isLoading: isLoadingTransaction } =
     useGetTransaction(transactionId)
   const { data: categories = [], isLoading: isLoadingCategories } =
@@ -92,22 +95,37 @@ export function TransactionDetailPage() {
 
   return (
     <div className="flex flex-col gap-6 md:gap-8">
-      <header className="flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
-            Movimiento
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Detalle del registro y opción para deshacerlo.
-          </p>
-        </div>
+      <header className="flex flex-col gap-3">
         <Link
           to="/"
           aria-label="Volver"
-          className={cn(buttonVariants({ variant: 'ghost', size: 'icon-lg' }))}
+          className={cn(
+            buttonVariants({ variant: 'ghost', size: 'icon-lg' }),
+            'self-start',
+          )}
         >
           <ChevronLeftIcon />
         </Link>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col gap-1">
+            <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
+              Movimiento
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Detalle del registro. Puedes editarlo o deshacerlo.
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            className="shrink-0"
+            onClick={() => setIsEditOpen(true)}
+          >
+            <PencilIcon data-icon="inline-start" />
+            Editar
+          </Button>
+        </div>
       </header>
 
       <section className="glass-panel flex flex-col items-center gap-3 rounded-2xl p-6 text-center">
@@ -174,6 +192,12 @@ export function TransactionDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <TransactionDrawer
+        open={isEditOpen}
+        onOpenChange={setIsEditOpen}
+        transaction={transaction}
+      />
     </div>
   )
 }

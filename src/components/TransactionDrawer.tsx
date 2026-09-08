@@ -45,9 +45,13 @@ import { Textarea } from '@/components/ui/textarea.tsx'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group.tsx'
 import { Button } from '@/components/ui/button.tsx'
 import { useGetCategories } from '@/features/categories/services/queries.ts'
+import type { ITransaction } from '@/features/transactions/interfaces/get-all.interface.ts'
 import type { CreateTransactionSchema } from '@/features/transactions/schemas/create.schema.ts'
 import { createTransactionSchema } from '@/features/transactions/schemas/create.schema.ts'
-import { useCreateTransaction } from '@/features/transactions/services/queries.ts'
+import {
+  useCreateTransaction,
+  useUpdateTransaction,
+} from '@/features/transactions/services/queries.ts'
 import { useMediaQuery } from '@/shared/hooks/use-media-query.ts'
 import { todayDateInput } from '@/shared/lib/format.ts'
 import { PAYMENT_METHOD_OPTIONS } from '@/shared/lib/payment-method.ts'
@@ -55,9 +59,25 @@ import { PAYMENT_METHOD_OPTIONS } from '@/shared/lib/payment-method.ts'
 interface TransactionDrawerProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  transaction?: ITransaction | null
 }
 
-function getDefaultValues(categoryId = ''): CreateTransactionSchema {
+function getDefaultValues(
+  categoryId = '',
+  transaction?: ITransaction | null,
+): CreateTransactionSchema {
+  if (transaction) {
+    return {
+      type: transaction.type,
+      paymentMethod: transaction.paymentMethod,
+      title: transaction.title,
+      amount: transaction.amount,
+      categoryId: transaction.categoryId,
+      date: transaction.date,
+      description: transaction.description ?? '',
+    }
+  }
+
   return {
     type: 'expense',
     paymentMethod: 'debit',
@@ -69,11 +89,18 @@ function getDefaultValues(categoryId = ''): CreateTransactionSchema {
   }
 }
 
-export function TransactionDrawer({ open, onOpenChange }: TransactionDrawerProps) {
+export function TransactionDrawer({
+  open,
+  onOpenChange,
+  transaction = null,
+}: TransactionDrawerProps) {
   const isDesktop = useMediaQuery('(min-width: 768px)')
+  const isEditing = Boolean(transaction)
   const titleInputRef = useRef<HTMLInputElement | null>(null)
   const { data: categories = [] } = useGetCategories()
-  const { mutateAsync: saveTransaction, isPending } = useCreateTransaction()
+  const { mutateAsync: saveTransaction, isPending: isCreating } = useCreateTransaction()
+  const { mutateAsync: updateTransaction, isPending: isUpdating } = useUpdateTransaction()
+  const isPending = isCreating || isUpdating
 
   const form = useForm<CreateTransactionSchema>({
     resolver: zodResolver(createTransactionSchema),
@@ -86,17 +113,23 @@ export function TransactionDrawer({ open, onOpenChange }: TransactionDrawerProps
     titleInputRef.current?.focus()
   })
 
+  const resetFormForOpen = useEffectEvent(() => {
+    form.reset(getDefaultValues(categories[0]?.id ?? '', transaction))
+  })
+
   useEffect(() => {
     if (!open) {
       return
     }
+
+    resetFormForOpen()
 
     const frameId = requestAnimationFrame(() => {
       focusTitleInput()
     })
 
     return () => cancelAnimationFrame(frameId)
-  }, [open])
+  }, [open, transaction])
 
   const categoryOptions = categories.map((category) => ({
     id: category.id,
@@ -107,7 +140,7 @@ export function TransactionDrawer({ open, onOpenChange }: TransactionDrawerProps
   )
 
   async function onSubmit(values: CreateTransactionSchema) {
-    await saveTransaction({
+    const payload = {
       title: values.title,
       amount: values.amount,
       type: values.type,
@@ -115,18 +148,36 @@ export function TransactionDrawer({ open, onOpenChange }: TransactionDrawerProps
       categoryId: values.categoryId,
       date: values.date,
       description: values.description || undefined,
-    })
-    toast.success('Movimiento guardado')
-    form.reset(getDefaultValues(categories[0]?.id ?? ''))
+    }
+
+    if (transaction) {
+      await updateTransaction({ id: transaction.id, payload })
+      toast.success('Movimiento actualizado')
+    } else {
+      await saveTransaction(payload)
+      toast.success('Movimiento guardado')
+      form.reset(getDefaultValues(categories[0]?.id ?? ''))
+    }
+
     onOpenChange(false)
   }
 
   function handleOpenChange(nextOpen: boolean) {
     if (nextOpen) {
-      form.reset(getDefaultValues(categories[0]?.id ?? ''))
+      form.reset(getDefaultValues(categories[0]?.id ?? '', transaction))
     }
     onOpenChange(nextOpen)
   }
+
+  const title = isEditing ? 'Editar movimiento' : 'Nuevo movimiento'
+  const description = isEditing
+    ? 'Corrige los datos de este movimiento.'
+    : 'Registra un ingreso o un gasto en tu flujo.'
+  const submitLabel = isPending
+    ? 'Guardando...'
+    : isEditing
+      ? 'Guardar cambios'
+      : 'Guardar movimiento'
 
   const fields = (
     <FieldGroup>
@@ -309,10 +360,8 @@ export function TransactionDrawer({ open, onOpenChange }: TransactionDrawerProps
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent className="gap-4 overflow-y-auto sm:max-w-xl">
           <DialogHeader>
-            <DialogTitle>Nuevo movimiento</DialogTitle>
-            <DialogDescription>
-              Registra un ingreso o un gasto en tu flujo.
-            </DialogDescription>
+            <DialogTitle>{title}</DialogTitle>
+            <DialogDescription>{description}</DialogDescription>
           </DialogHeader>
 
           <form
@@ -327,7 +376,7 @@ export function TransactionDrawer({ open, onOpenChange }: TransactionDrawerProps
                 className="h-12 min-w-48 rounded-md text-base"
                 disabled={isPending}
               >
-                {isPending ? 'Guardando...' : 'Guardar movimiento'}
+                {submitLabel}
               </Button>
             </div>
           </form>
@@ -342,17 +391,15 @@ export function TransactionDrawer({ open, onOpenChange }: TransactionDrawerProps
       onOpenChange={handleOpenChange}
       onOpenChangeComplete={(isOpen) => {
         if (isOpen) {
-          form.reset(getDefaultValues(categories[0]?.id ?? ''))
+          form.reset(getDefaultValues(categories[0]?.id ?? '', transaction))
         }
       }}
       showSwipeHandle
     >
       <DrawerContent className="mx-auto w-full max-w-lg overflow-x-hidden rounded-t-md">
         <DrawerHeader>
-          <DrawerTitle>Nuevo movimiento</DrawerTitle>
-          <DrawerDescription>
-            Registra un ingreso o un gasto en tu flujo.
-          </DrawerDescription>
+          <DrawerTitle>{title}</DrawerTitle>
+          <DrawerDescription>{description}</DrawerDescription>
         </DrawerHeader>
 
         <form
@@ -369,7 +416,7 @@ export function TransactionDrawer({ open, onOpenChange }: TransactionDrawerProps
               className="h-12 w-full rounded-md text-base"
               disabled={isPending}
             >
-              {isPending ? 'Guardando...' : 'Guardar movimiento'}
+              {submitLabel}
             </Button>
           </DrawerFooter>
         </form>
