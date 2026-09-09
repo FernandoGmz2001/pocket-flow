@@ -1,0 +1,10 @@
+---
+description: Reglas y convenciones para animaciones con Motion en React
+globs: **/*.{tsx,jsx}
+alwaysApply: true
+---
+
+- Always use modern `motion/react` imports.
+- Animate only `opacity` and `transform` (scale, x, y).
+- Use spring physics: `transition: { type: "spring", stiffness: 300, damping: 25 }`.
+- Wrap exits with `<AnimatePresence mode="wait">` and unique keys.

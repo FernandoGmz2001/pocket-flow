@@ -1,7 +1,7 @@
-import { useEffect, useEffectEvent, useRef } from 'react'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { Controller, useForm } from 'react-hook-form'
-import { toast } from 'sonner'
+import { useEffect, useEffectEvent, useRef } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Controller, useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 import {
   Dialog,
@@ -9,7 +9,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog.tsx'
+} from "@/components/ui/dialog.tsx";
 import {
   Drawer,
   DrawerContent,
@@ -17,14 +17,14 @@ import {
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
-} from '@/components/ui/drawer.tsx'
+} from "@/components/ui/drawer.tsx";
 import {
   Field,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from '@/components/ui/field.tsx'
-import { Input } from '@/components/ui/input.tsx'
+} from "@/components/ui/field.tsx";
+import { Input } from "@/components/ui/input.tsx";
 import {
   Combobox,
   ComboboxContent,
@@ -32,7 +32,7 @@ import {
   ComboboxInput,
   ComboboxItem,
   ComboboxList,
-} from '@/components/ui/combobox.tsx'
+} from "@/components/ui/combobox.tsx";
 import {
   Select,
   SelectContent,
@@ -40,31 +40,31 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select.tsx'
-import { Textarea } from '@/components/ui/textarea.tsx'
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group.tsx'
-import { Button } from '@/components/ui/button.tsx'
-import { useGetCategories } from '@/features/categories/services/queries.ts'
-import type { ITransaction } from '@/features/transactions/interfaces/get-all.interface.ts'
-import type { CreateTransactionSchema } from '@/features/transactions/schemas/create.schema.ts'
-import { createTransactionSchema } from '@/features/transactions/schemas/create.schema.ts'
+} from "@/components/ui/select.tsx";
+import { Textarea } from "@/components/ui/textarea.tsx";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group.tsx";
+import { Button } from "@/components/ui/button.tsx";
+import { useGetCategories } from "@/features/categories/services/queries.ts";
+import type { ITransaction } from "@/features/transactions/interfaces/get-all.interface.ts";
+import type { CreateTransactionSchema } from "@/features/transactions/schemas/create.schema.ts";
+import { createTransactionSchema } from "@/features/transactions/schemas/create.schema.ts";
 import {
   useCreateTransaction,
   useUpdateTransaction,
-} from '@/features/transactions/services/queries.ts'
-import { cn } from '@/lib/utils.ts'
-import { useMediaQuery } from '@/shared/hooks/use-media-query.ts'
-import { todayDateInput } from '@/shared/lib/format.ts'
-import { PAYMENT_METHOD_OPTIONS } from '@/shared/lib/payment-method.ts'
+} from "@/features/transactions/services/queries.ts";
+import { cn } from "@/lib/utils.ts";
+import { useMediaQuery } from "@/shared/hooks/use-media-query.ts";
+import { todayDateInput } from "@/shared/lib/format.ts";
+import { PAYMENT_METHOD_OPTIONS } from "@/shared/lib/payment-method.ts";
 
 interface TransactionDrawerProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  transaction?: ITransaction | null
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  transaction?: ITransaction | null;
 }
 
 function getDefaultValues(
-  categoryId = '',
+  categoryId = "",
   transaction?: ITransaction | null,
 ): CreateTransactionSchema {
   if (transaction) {
@@ -75,73 +75,75 @@ function getDefaultValues(
       amount: transaction.amount,
       categoryId: transaction.categoryId,
       date: transaction.date,
-      description: transaction.description ?? '',
-    }
+      description: transaction.description ?? "",
+    };
   }
 
   return {
-    type: 'expense',
-    paymentMethod: 'debit',
-    title: '',
+    type: "expense",
+    paymentMethod: "debit",
+    title: "",
     amount: undefined as unknown as number,
     categoryId,
     date: todayDateInput(),
-    description: '',
-  }
+    description: "",
+  };
 }
 
 const selectedTypeClassName =
-  'data-[pressed]:bg-primary data-[pressed]:text-primary-foreground data-[pressed]:hover:bg-primary data-[pressed]:hover:text-primary-foreground data-[state=on]:bg-primary data-[state=on]:text-primary-foreground aria-pressed:bg-primary aria-pressed:text-primary-foreground'
+  "data-[pressed]:bg-primary data-[pressed]:text-primary-foreground data-[pressed]:hover:bg-primary data-[pressed]:hover:text-primary-foreground data-[state=on]:bg-primary data-[state=on]:text-primary-foreground aria-pressed:bg-primary aria-pressed:text-primary-foreground";
 
 export function TransactionDrawer({
   open,
   onOpenChange,
   transaction = null,
 }: TransactionDrawerProps) {
-  const isDesktop = useMediaQuery('(min-width: 768px)')
-  const isEditing = Boolean(transaction)
-  const titleInputRef = useRef<HTMLInputElement | null>(null)
-  const { data: categories = [] } = useGetCategories()
-  const { mutateAsync: saveTransaction, isPending: isCreating } = useCreateTransaction()
-  const { mutateAsync: updateTransaction, isPending: isUpdating } = useUpdateTransaction()
-  const isPending = isCreating || isUpdating
+  const isDesktop = useMediaQuery("(min-width: 768px)");
+  const isEditing = Boolean(transaction);
+  const titleInputRef = useRef<HTMLInputElement | null>(null);
+  const { data: categories = [] } = useGetCategories();
+  const { mutateAsync: saveTransaction, isPending: isCreating } =
+    useCreateTransaction();
+  const { mutateAsync: updateTransaction, isPending: isUpdating } =
+    useUpdateTransaction();
+  const isPending = isCreating || isUpdating;
 
   const form = useForm<CreateTransactionSchema>({
     resolver: zodResolver(createTransactionSchema),
     defaultValues: getDefaultValues(),
-  })
+  });
 
-  const titleRegister = form.register('title')
+  const titleRegister = form.register("title");
 
   const focusTitleInput = useEffectEvent(() => {
-    titleInputRef.current?.focus()
-  })
+    titleInputRef.current?.focus();
+  });
 
   const resetFormForOpen = useEffectEvent(() => {
-    form.reset(getDefaultValues(categories[0]?.id ?? '', transaction))
-  })
+    form.reset(getDefaultValues(categories[0]?.id ?? "", transaction));
+  });
 
   useEffect(() => {
     if (!open) {
-      return
+      return;
     }
 
-    resetFormForOpen()
+    resetFormForOpen();
 
     const frameId = requestAnimationFrame(() => {
-      focusTitleInput()
-    })
+      focusTitleInput();
+    });
 
-    return () => cancelAnimationFrame(frameId)
-  }, [open, transaction])
+    return () => cancelAnimationFrame(frameId);
+  }, [open, transaction]);
 
   const categoryOptions = categories.map((category) => ({
     id: category.id,
     name: category.name,
-  }))
+  }));
   const paymentMethodItems = Object.fromEntries(
     PAYMENT_METHOD_OPTIONS.map((option) => [option.value, option.label]),
-  )
+  );
 
   async function onSubmit(values: CreateTransactionSchema) {
     const payload = {
@@ -152,36 +154,36 @@ export function TransactionDrawer({
       categoryId: values.categoryId,
       date: values.date,
       description: values.description || undefined,
-    }
+    };
 
     if (transaction) {
-      await updateTransaction({ id: transaction.id, payload })
-      toast.success('Movimiento actualizado')
+      await updateTransaction({ id: transaction.id, payload });
+      toast.success("Movimiento actualizado");
     } else {
-      await saveTransaction(payload)
-      toast.success('Movimiento guardado')
-      form.reset(getDefaultValues(categories[0]?.id ?? ''))
+      await saveTransaction(payload);
+      toast.success("Movimiento guardado");
+      form.reset(getDefaultValues(categories[0]?.id ?? ""));
     }
 
-    onOpenChange(false)
+    onOpenChange(false);
   }
 
   function handleOpenChange(nextOpen: boolean) {
     if (nextOpen) {
-      form.reset(getDefaultValues(categories[0]?.id ?? '', transaction))
+      form.reset(getDefaultValues(categories[0]?.id ?? "", transaction));
     }
-    onOpenChange(nextOpen)
+    onOpenChange(nextOpen);
   }
 
-  const title = isEditing ? 'Editar movimiento' : 'Nuevo movimiento'
+  const title = isEditing ? "Editar movimiento" : "Nuevo movimiento";
   const description = isEditing
-    ? 'Corrige los datos de este movimiento.'
-    : 'Registra un ingreso o un gasto en tu flujo.'
+    ? "Corrige los datos de este movimiento."
+    : "Registra un ingreso o un gasto en tu flujo.";
   const submitLabel = isPending
-    ? 'Guardando...'
+    ? "Guardando..."
     : isEditing
-      ? 'Guardar cambios'
-      : 'Guardar movimiento'
+      ? "Guardar cambios"
+      : "Guardar movimiento";
 
   const fields = (
     <FieldGroup>
@@ -199,18 +201,18 @@ export function TransactionDrawer({
               value={[field.value]}
               onValueChange={(value) => {
                 if (value[0]) {
-                  field.onChange(value[0])
+                  field.onChange(value[0]);
                 }
               }}
             >
               <ToggleGroupItem
-                className={cn('flex-1 rounded-md', selectedTypeClassName)}
+                className={cn("flex-1 rounded-md", selectedTypeClassName)}
                 value="expense"
               >
                 Gasto
               </ToggleGroupItem>
               <ToggleGroupItem
-                className={cn('flex-1 rounded-md', selectedTypeClassName)}
+                className={cn("flex-1 rounded-md", selectedTypeClassName)}
                 value="income"
               >
                 Ingreso
@@ -232,14 +234,16 @@ export function TransactionDrawer({
               value={field.value || null}
               onValueChange={(value) => {
                 if (value) {
-                  field.onChange(value)
+                  field.onChange(value);
                 }
               }}
               items={paymentMethodItems}
             >
               <SelectTrigger
                 className="w-full rounded-md"
-                aria-invalid={!!form.formState.errors.paymentMethod || undefined}
+                aria-invalid={
+                  !!form.formState.errors.paymentMethod || undefined
+                }
               >
                 <SelectValue placeholder="Selecciona el tipo de pago" />
               </SelectTrigger>
@@ -269,8 +273,8 @@ export function TransactionDrawer({
           aria-invalid={!!form.formState.errors.title || undefined}
           {...titleRegister}
           ref={(element) => {
-            titleRegister.ref(element)
-            titleInputRef.current = element
+            titleRegister.ref(element);
+            titleInputRef.current = element;
           }}
         />
         <FieldError errors={[form.formState.errors.title]} />
@@ -289,7 +293,7 @@ export function TransactionDrawer({
           placeholder="0.00"
           className="rounded-md"
           aria-invalid={!!form.formState.errors.amount || undefined}
-          {...form.register('amount')}
+          {...form.register("amount")}
         />
         <FieldError errors={[form.formState.errors.amount]} />
       </Field>
@@ -303,14 +307,15 @@ export function TransactionDrawer({
           name="categoryId"
           render={({ field }) => {
             const selectedCategory =
-              categoryOptions.find((category) => category.id === field.value) ?? null
+              categoryOptions.find((category) => category.id === field.value) ??
+              null;
 
             return (
               <Combobox
                 items={categoryOptions}
                 value={selectedCategory}
                 onValueChange={(category) => {
-                  field.onChange(category?.id ?? '')
+                  field.onChange(category?.id ?? "");
                 }}
                 itemToStringLabel={(category) => category.name}
                 itemToStringValue={(category) => category.id}
@@ -332,7 +337,7 @@ export function TransactionDrawer({
                   </ComboboxList>
                 </ComboboxContent>
               </Combobox>
-            )
+            );
           }}
         />
         <FieldError errors={[form.formState.errors.categoryId]} />
@@ -347,7 +352,7 @@ export function TransactionDrawer({
           type="date"
           className="max-w-full rounded-md"
           aria-invalid={!!form.formState.errors.date || undefined}
-          {...form.register('date')}
+          {...form.register("date")}
         />
         <FieldError errors={[form.formState.errors.date]} />
       </Field>
@@ -359,11 +364,11 @@ export function TransactionDrawer({
           placeholder="Opcional"
           className="min-h-16 resize-none rounded-md md:min-h-14"
           rows={2}
-          {...form.register('description')}
+          {...form.register("description")}
         />
       </Field>
     </FieldGroup>
-  )
+  );
 
   if (isDesktop) {
     return (
@@ -392,7 +397,7 @@ export function TransactionDrawer({
           </form>
         </DialogContent>
       </Dialog>
-    )
+    );
   }
 
   return (
@@ -401,7 +406,7 @@ export function TransactionDrawer({
       onOpenChange={handleOpenChange}
       onOpenChangeComplete={(isOpen) => {
         if (isOpen) {
-          form.reset(getDefaultValues(categories[0]?.id ?? '', transaction))
+          form.reset(getDefaultValues(categories[0]?.id ?? "", transaction));
         }
       }}
       showSwipeHandle
@@ -432,5 +437,5 @@ export function TransactionDrawer({
         </form>
       </DrawerContent>
     </Drawer>
-  )
+  );
 }

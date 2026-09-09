@@ -1,4 +1,5 @@
 import { ChartColumnIcon } from 'lucide-react'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts'
 
 import {
@@ -25,6 +26,7 @@ import { Skeleton } from '@/components/ui/skeleton.tsx'
 import type { ICategory } from '@/features/categories/interfaces/get-all.interface.ts'
 import type { ITransaction } from '@/features/transactions/interfaces/get-all.interface.ts'
 import { formatCurrency } from '@/shared/lib/format.ts'
+import { fadeUpVariants } from '@/shared/lib/motion.ts'
 
 const chartConfig = {
   average: {
@@ -44,22 +46,8 @@ export function CategoryStats({
   categories,
   isLoading = false,
 }: CategoryStatsProps) {
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Promedio de gastos por categoría</CardTitle>
-          <CardDescription>
-            Gasto medio por movimiento en el periodo seleccionado.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="h-[180px] w-full rounded-xl md:h-[200px]" />
-        </CardContent>
-      </Card>
-    )
-  }
-
+  const prefersReducedMotion = useReducedMotion()
+  const motionOn = !prefersReducedMotion
   const expenses = transactions.filter((transaction) => transaction.type === 'expense')
   const totalsByCategory = new Map<string, { total: number; count: number }>()
 
@@ -86,6 +74,12 @@ export function CategoryStats({
     })
     .sort((left, right) => right.average - left.average)
 
+  const contentKey = isLoading
+    ? 'loading'
+    : chartData.length === 0
+      ? 'empty'
+      : chartData.map((item) => item.category).join('|')
+
   return (
     <Card>
       <CardHeader>
@@ -95,56 +89,87 @@ export function CategoryStats({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {chartData.length === 0 ? (
-          <Empty className="border-dashed py-8">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <ChartColumnIcon />
-              </EmptyMedia>
-              <EmptyTitle>Sin gastos en este periodo</EmptyTitle>
-              <EmptyDescription>
-                Cambia el filtro o registra un gasto para ver el promedio por categoría.
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        ) : (
-          <ChartContainer config={chartConfig} className="aspect-auto h-[180px] w-full md:h-[200px]">
-            <BarChart accessibilityLayer data={chartData}>
-              <CartesianGrid vertical={false} />
-              <XAxis
-                dataKey="category"
-                tickLine={false}
-                tickMargin={8}
-                axisLine={false}
-                tickFormatter={(value: string) =>
-                  value.length > 10 ? `${value.slice(0, 10)}…` : value
-                }
-              />
-              <ChartTooltip
-                cursor={false}
-                content={
-                  <ChartTooltipContent
-                    formatter={(value) => (
-                      <div className="flex flex-1 items-center justify-between gap-4 leading-none">
-                        <span className="text-muted-foreground">Promedio</span>
-                        <span className="font-mono font-medium text-foreground tabular-nums">
-                          {formatCurrency(Number(value))}
-                        </span>
-                      </div>
-                    )}
+        <AnimatePresence mode="wait">
+          {isLoading ? (
+            <motion.div
+              key="loading"
+              initial={motionOn ? 'hidden' : false}
+              animate="show"
+              exit="exit"
+              variants={fadeUpVariants}
+            >
+              <Skeleton className="h-[180px] w-full rounded-xl md:h-[200px]" />
+            </motion.div>
+          ) : chartData.length === 0 ? (
+            <motion.div
+              key="empty"
+              initial={motionOn ? 'hidden' : false}
+              animate="show"
+              exit="exit"
+              variants={fadeUpVariants}
+            >
+              <Empty className="border-dashed py-8">
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <ChartColumnIcon />
+                  </EmptyMedia>
+                  <EmptyTitle>Sin gastos en este periodo</EmptyTitle>
+                  <EmptyDescription>
+                    Cambia el filtro o registra un gasto para ver el promedio por categoría.
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+            </motion.div>
+          ) : (
+            <motion.div
+              key={contentKey}
+              initial={motionOn ? 'hidden' : false}
+              animate="show"
+              exit="exit"
+              variants={fadeUpVariants}
+            >
+              <ChartContainer
+                config={chartConfig}
+                className="aspect-auto h-[180px] w-full md:h-[200px]"
+              >
+                <BarChart accessibilityLayer data={chartData}>
+                  <CartesianGrid vertical={false} />
+                  <XAxis
+                    dataKey="category"
+                    tickLine={false}
+                    tickMargin={8}
+                    axisLine={false}
+                    tickFormatter={(value: string) =>
+                      value.length > 10 ? `${value.slice(0, 10)}…` : value
+                    }
                   />
-                }
-              />
-              <Bar
-                dataKey="average"
-                fill="var(--color-average)"
-                radius={4}
-                maxBarSize={48}
-                isAnimationActive={false}
-              />
-            </BarChart>
-          </ChartContainer>
-        )}
+                  <ChartTooltip
+                    cursor={false}
+                    content={
+                      <ChartTooltipContent
+                        formatter={(value) => (
+                          <div className="flex flex-1 items-center justify-between gap-4 leading-none">
+                            <span className="text-muted-foreground">Promedio</span>
+                            <span className="font-mono font-medium text-foreground tabular-nums">
+                              {formatCurrency(Number(value))}
+                            </span>
+                          </div>
+                        )}
+                      />
+                    }
+                  />
+                  <Bar
+                    dataKey="average"
+                    fill="var(--color-average)"
+                    radius={4}
+                    maxBarSize={48}
+                    isAnimationActive={false}
+                  />
+                </BarChart>
+              </ChartContainer>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </CardContent>
     </Card>
   )

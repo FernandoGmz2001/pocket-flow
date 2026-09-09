@@ -1,6 +1,14 @@
 import * as React from "react"
 import { Drawer as DrawerPrimitive } from "@base-ui/react/drawer"
 import { cn } from "cn"
+import { motion, useReducedMotion } from "motion/react"
+
+import {
+  CARD_TAP,
+  drawerHandleVariants,
+  drawerInnerVariants,
+  SPRING,
+} from "@/shared/lib/motion.ts"
 
 type DrawerContextProps = {
   hasSnapPoints: boolean
@@ -49,16 +57,46 @@ function Drawer({
   )
 }
 
-function DrawerTrigger({ ...props }: DrawerPrimitive.Trigger.Props) {
-  return <DrawerPrimitive.Trigger data-slot="drawer-trigger" {...props} />
+function DrawerTrigger({ className, ...props }: DrawerPrimitive.Trigger.Props) {
+  const prefersReducedMotion = useReducedMotion()
+
+  return (
+    <motion.span
+      className="inline-flex"
+      whileHover={prefersReducedMotion ? undefined : { scale: 1.02 }}
+      whileTap={prefersReducedMotion ? undefined : CARD_TAP}
+      transition={SPRING}
+    >
+      <DrawerPrimitive.Trigger
+        data-slot="drawer-trigger"
+        className={className}
+        {...props}
+      />
+    </motion.span>
+  )
 }
 
 function DrawerPortal({ ...props }: DrawerPrimitive.Portal.Props) {
   return <DrawerPrimitive.Portal data-slot="drawer-portal" {...props} />
 }
 
-function DrawerClose({ ...props }: DrawerPrimitive.Close.Props) {
-  return <DrawerPrimitive.Close data-slot="drawer-close" {...props} />
+function DrawerClose({ className, ...props }: DrawerPrimitive.Close.Props) {
+  const prefersReducedMotion = useReducedMotion()
+
+  return (
+    <motion.span
+      className="inline-flex"
+      whileHover={prefersReducedMotion ? undefined : { scale: 1.02 }}
+      whileTap={prefersReducedMotion ? undefined : CARD_TAP}
+      transition={SPRING}
+    >
+      <DrawerPrimitive.Close
+        data-slot="drawer-close"
+        className={className}
+        {...props}
+      />
+    </motion.span>
+  )
 }
 
 function DrawerOverlay({
@@ -80,16 +118,26 @@ function DrawerOverlay({
 function DrawerSwipeHandle({
   className,
   ...props
-}: React.ComponentProps<"div">) {
+}: Omit<
+  React.ComponentProps<"div">,
+  "onDrag" | "onDragStart" | "onDragEnd" | "onAnimationStart"
+>) {
+  const prefersReducedMotion = useReducedMotion()
+
   return (
-    <div
+    <motion.div
       data-slot="drawer-swipe-handle"
       aria-hidden="true"
+      {...props}
       className={cn(
         "relative z-10 flex shrink-0 cursor-grab transition-opacity duration-200 group-data-nested-drawer-open/drawer-popup:opacity-0 group-data-nested-drawer-swiping/drawer-popup:opacity-100 group-data-[swipe-axis=x]/drawer-popup:h-full group-data-[swipe-axis=x]/drawer-popup:w-3 group-data-[swipe-axis=x]/drawer-popup:items-center group-data-[swipe-axis=y]/drawer-popup:h-3 group-data-[swipe-axis=y]/drawer-popup:w-full group-data-[swipe-axis=y]/drawer-popup:justify-center group-data-[swipe-direction=down]/drawer-popup:items-end group-data-[swipe-direction=left]/drawer-popup:order-last group-data-[swipe-direction=left]/drawer-popup:justify-start group-data-[swipe-direction=right]/drawer-popup:justify-end group-data-[swipe-direction=up]/drawer-popup:order-last group-data-[swipe-direction=up]/drawer-popup:items-start after:block after:shrink-0 after:rounded-full after:bg-muted group-data-[swipe-axis=x]/drawer-popup:after:h-24 group-data-[swipe-axis=x]/drawer-popup:after:w-1 group-data-[swipe-axis=y]/drawer-popup:after:h-1 group-data-[swipe-axis=y]/drawer-popup:after:w-24 active:cursor-grabbing",
         className
       )}
-      {...props}
+      variants={drawerHandleVariants}
+      initial={prefersReducedMotion ? false : "hidden"}
+      animate="show"
+      whileTap={prefersReducedMotion ? undefined : { scale: 0.96 }}
+      transition={SPRING}
     />
   )
 }
@@ -100,6 +148,7 @@ function DrawerContent({
   ...props
 }: DrawerPrimitive.Popup.Props) {
   const { hasSnapPoints, modal, showSwipeHandle, swipeDirection } = useDrawer()
+  const prefersReducedMotion = useReducedMotion()
   const swipeAxis =
     swipeDirection === "down" || swipeDirection === "up" ? "y" : "x"
 
@@ -153,7 +202,15 @@ function DrawerContent({
               "flex min-h-0 flex-1 flex-col overflow-hidden overscroll-contain rounded-[inherit] transition-opacity duration-300 ease-[cubic-bezier(0.45,1.005,0,1.005)] select-text group-data-nested-drawer-open/drawer-popup:opacity-0 group-data-nested-drawer-swiping/drawer-popup:opacity-100 group-data-swiping/drawer-popup:select-none"
             )}
           >
-            {children}
+            <motion.div
+              className="flex min-h-0 flex-1 flex-col overflow-hidden"
+              variants={drawerInnerVariants}
+              initial={prefersReducedMotion ? false : "hidden"}
+              animate="show"
+              exit="exit"
+            >
+              {children}
+            </motion.div>
           </DrawerPrimitive.Content>
         </DrawerPrimitive.Popup>
       </DrawerPrimitive.Viewport>
